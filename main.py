@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 FINAL_CLASS_NAMES = [
@@ -150,6 +151,41 @@ def print_final_class_counts(labels, dataset_name):
         print(f"{class_id:2d} - {class_name}: {count}")
 
 
+def show_class_examples(images, labels):
+    fig, axes = plt.subplots(4, 6, figsize=(12, 8))
+
+    for class_id, ax in enumerate(axes.flat):
+        image_index = np.where(labels == class_id)[0][0]
+
+        ax.imshow(images[image_index])
+        ax.set_title(FINAL_CLASS_NAMES[class_id], fontsize=9)
+        ax.axis("off")
+
+    plt.suptitle("Example Image from Each Class")
+    plt.tight_layout()
+    plt.savefig("class_examples.png")
+    plt.show()
+
+
+def show_class_distribution(labels):
+    class_counts = [
+        np.sum(labels == class_id)
+        for class_id in range(len(FINAL_CLASS_NAMES))
+    ]
+
+    plt.figure(figsize=(14, 6))
+
+    plt.bar(FINAL_CLASS_NAMES, class_counts)
+
+    plt.title("Training Image Distribution")
+    plt.xlabel("Class")
+    plt.ylabel("Number of Images")
+    plt.xticks(rotation=60, ha="right")
+
+    plt.tight_layout()
+    plt.savefig("class_distribution.png")
+    plt.show() 
+
 def main():
     print("Smart Technologies CA1")
     print("TensorFlow version:", tf.__version__)
@@ -213,6 +249,9 @@ def main():
 
     print_final_class_counts(y_train, "Training")
     print_final_class_counts(y_test, "Testing")
+
+    show_class_examples(x_train, y_train)
+    show_class_distribution(y_train)
 
 
 if __name__ == "__main__":
