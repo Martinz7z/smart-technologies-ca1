@@ -2,6 +2,14 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
+from preprocessing import (
+    convert_to_grayscale,
+    apply_gaussian_blur,
+    equalize_histogram,
+    normalize_image,
+    resize_image,
+)
+
 
 FINAL_CLASS_NAMES = [
     "automobile",
@@ -186,6 +194,41 @@ def show_class_distribution(labels):
     plt.savefig("class_distribution.png")
     plt.show() 
 
+def show_preprocessing_examples(image):
+    grayscale = convert_to_grayscale(image)
+    blurred = apply_gaussian_blur(image)
+    equalized = equalize_histogram(image)
+    normalized = normalize_image(image)
+    resized = resize_image(image)
+
+    fig, axes = plt.subplots(2, 3, figsize=(10, 7))
+
+    axes[0, 0].imshow(image)
+    axes[0, 0].set_title("Original")
+
+    axes[0, 1].imshow(grayscale, cmap="gray")
+    axes[0, 1].set_title("Grayscale")
+
+    axes[0, 2].imshow(blurred)
+    axes[0, 2].set_title("Gaussian Blur")
+
+    axes[1, 0].imshow(equalized, cmap="gray")
+    axes[1, 0].set_title("Histogram Equalised")
+
+    axes[1, 1].imshow(normalized)
+    axes[1, 1].set_title("Normalised")
+
+    axes[1, 2].imshow(resized)
+    axes[1, 2].set_title("Resized 64x64")
+
+    for ax in axes.flat:
+        ax.axis("off")
+
+    plt.suptitle("Image Preprocessing Examples")
+    plt.tight_layout()
+    plt.savefig("preprocessing_examples.png")
+    plt.show()
+
 def main():
     print("Smart Technologies CA1")
     print("TensorFlow version:", tf.__version__)
@@ -252,6 +295,7 @@ def main():
 
     show_class_examples(x_train, y_train)
     show_class_distribution(y_train)
+    show_preprocessing_examples(x_train[0])
 
 
 if __name__ == "__main__":
