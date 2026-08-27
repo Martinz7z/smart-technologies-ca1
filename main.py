@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
+from cnn_model import create_baseline_model
 from preprocessing import (
     convert_to_grayscale,
     apply_gaussian_blur,
@@ -182,7 +183,6 @@ def show_class_distribution(labels):
     ]
 
     plt.figure(figsize=(14, 6))
-
     plt.bar(FINAL_CLASS_NAMES, class_counts)
 
     plt.title("Training Image Distribution")
@@ -192,7 +192,8 @@ def show_class_distribution(labels):
 
     plt.tight_layout()
     plt.savefig("class_distribution.png")
-    plt.show() 
+    plt.show()
+
 
 def show_preprocessing_examples(image):
     grayscale = convert_to_grayscale(image)
@@ -229,11 +230,69 @@ def show_preprocessing_examples(image):
     plt.savefig("preprocessing_examples.png")
     plt.show()
 
+
+def train_baseline_model(x_train, y_train, x_test, y_test):
+    x_train = x_train.astype("float32") / 255.0
+    x_test = x_test.astype("float32") / 255.0
+
+    model = create_baseline_model()
+
+    print("\nBaseline CNN")
+    model.summary()
+
+    history = model.fit(
+        x_train,
+        y_train,
+        validation_split=0.1,
+        epochs=10,
+        batch_size=64,
+        shuffle=True,
+    )
+
+    test_loss, test_accuracy = model.evaluate(
+        x_test,
+        y_test,
+        verbose=0,
+    )
+
+    print("\nBaseline model results")
+    print("Test loss:", test_loss)
+    print("Test accuracy:", test_accuracy)
+
+    return model, history
+
+
+def plot_training_history(history):
+    plt.figure(figsize=(8, 5))
+    plt.plot(history.history["accuracy"], label="Training Accuracy")
+    plt.plot(history.history["val_accuracy"], label="Validation Accuracy")
+
+    plt.title("Baseline CNN Accuracy")
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("baseline_accuracy.png")
+    plt.show()
+
+    plt.figure(figsize=(8, 5))
+    plt.plot(history.history["loss"], label="Training Loss")
+    plt.plot(history.history["val_loss"], label="Validation Loss")
+
+    plt.title("Baseline CNN Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("baseline_loss.png")
+    plt.show()
+
+
 def main():
     print("Smart Technologies CA1")
     print("TensorFlow version:", tf.__version__)
 
-    # CIFAR-10
+    # Load CIFAR-10
     (x_train_10, y_train_10), (x_test_10, y_test_10) = (
         tf.keras.datasets.cifar10.load_data()
     )
@@ -248,7 +307,7 @@ def main():
         y_test_10,
     )
 
-    # CIFAR-100
+    # Load CIFAR-100
     (x_train_100, y_train_100), (x_test_100, y_test_100) = (
         tf.keras.datasets.cifar100.load_data(label_mode="fine")
     )
@@ -284,6 +343,13 @@ def main():
         axis=0,
     )
 
+    # Shuffle training data so validation_split is representative
+    rng = np.random.default_rng(42)
+    indices = rng.permutation(len(x_train))
+
+    x_train = x_train[indices]
+    y_train = y_train[indices]
+
     print("\nCombined dataset")
     print("Training images:", x_train.shape)
     print("Training labels:", y_train.shape)
@@ -293,9 +359,20 @@ def main():
     print_final_class_counts(y_train, "Training")
     print_final_class_counts(y_test, "Testing")
 
-    show_class_examples(x_train, y_train)
-    show_class_distribution(y_train)
-    show_preprocessing_examples(x_train[0])
+    # Exploration plots already created
+    # Uncomment these if you want to regenerate them
+    # show_class_examples(x_train, y_train)
+    # show_class_distribution(y_train)
+    # show_preprocessing_examples(x_train[0])
+
+    model, history = train_baseline_model(
+        x_train,
+        y_train,
+        x_test,
+        y_test,
+    )
+
+    plot_training_history(history)
 
 
 if __name__ == "__main__":
