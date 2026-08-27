@@ -2,7 +2,11 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
-from cnn_model import create_baseline_model
+from cnn_model import (
+    create_baseline_model,
+    create_augmented_model,
+)
+
 from preprocessing import (
     convert_to_grayscale,
     apply_gaussian_blur,
@@ -231,13 +235,13 @@ def show_preprocessing_examples(image):
     plt.show()
 
 
-def train_baseline_model(x_train, y_train, x_test, y_test):
+def train_augmented_model(x_train, y_train, x_test, y_test):
     x_train = x_train.astype("float32") / 255.0
     x_test = x_test.astype("float32") / 255.0
 
-    model = create_baseline_model()
+    model = create_augmented_model()
 
-    print("\nBaseline CNN")
+    print("\nAugmented CNN - Experiment 3")
     model.summary()
 
     history = model.fit(
@@ -255,36 +259,54 @@ def train_baseline_model(x_train, y_train, x_test, y_test):
         verbose=0,
     )
 
-    print("\nBaseline model results")
+    print("\nExperiment 3 results")
     print("Test loss:", test_loss)
     print("Test accuracy:", test_accuracy)
 
     return model, history
 
 
-def plot_training_history(history):
+def plot_experiment_three_history(history):
     plt.figure(figsize=(8, 5))
-    plt.plot(history.history["accuracy"], label="Training Accuracy")
-    plt.plot(history.history["val_accuracy"], label="Validation Accuracy")
 
-    plt.title("Baseline CNN Accuracy")
+    plt.plot(
+        history.history["accuracy"],
+        label="Training Accuracy",
+    )
+
+    plt.plot(
+        history.history["val_accuracy"],
+        label="Validation Accuracy",
+    )
+
+    plt.title("Experiment 3 Accuracy")
     plt.xlabel("Epoch")
     plt.ylabel("Accuracy")
     plt.legend()
+
     plt.tight_layout()
-    plt.savefig("baseline_accuracy.png")
+    plt.savefig("experiment3_accuracy.png")
     plt.show()
 
     plt.figure(figsize=(8, 5))
-    plt.plot(history.history["loss"], label="Training Loss")
-    plt.plot(history.history["val_loss"], label="Validation Loss")
 
-    plt.title("Baseline CNN Loss")
+    plt.plot(
+        history.history["loss"],
+        label="Training Loss",
+    )
+
+    plt.plot(
+        history.history["val_loss"],
+        label="Validation Loss",
+    )
+
+    plt.title("Experiment 3 Loss")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
     plt.legend()
+
     plt.tight_layout()
-    plt.savefig("baseline_loss.png")
+    plt.savefig("experiment3_loss.png")
     plt.show()
 
 
@@ -343,7 +365,7 @@ def main():
         axis=0,
     )
 
-    # Shuffle training data so validation_split is representative
+    # Shuffle training data before validation split
     rng = np.random.default_rng(42)
     indices = rng.permutation(len(x_train))
 
@@ -360,19 +382,18 @@ def main():
     print_final_class_counts(y_test, "Testing")
 
     # Exploration plots already created
-    # Uncomment these if you want to regenerate them
     # show_class_examples(x_train, y_train)
     # show_class_distribution(y_train)
     # show_preprocessing_examples(x_train[0])
 
-    model, history = train_baseline_model(
+    model, history = train_augmented_model(
         x_train,
         y_train,
         x_test,
         y_test,
     )
 
-    plot_training_history(history)
+    plot_experiment_three_history(history)
 
 
 if __name__ == "__main__":
