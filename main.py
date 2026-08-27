@@ -235,40 +235,13 @@ def show_preprocessing_examples(image):
     plt.show()
 
 
-def calculate_class_weights(labels):
-    total_images = len(labels)
-    number_of_classes = len(FINAL_CLASS_NAMES)
-
-    class_weights = {}
-
-    for class_id in range(number_of_classes):
-        class_count = np.sum(labels == class_id)
-
-        class_weights[class_id] = (
-            total_images / (number_of_classes * class_count)
-        )
-
-    return class_weights
-
-
 def train_augmented_model(x_train, y_train, x_test, y_test):
     x_train = x_train.astype("float32") / 255.0
     x_test = x_test.astype("float32") / 255.0
 
-    class_weights = calculate_class_weights(y_train)
-
-    print("\nClass weights:")
-
-    for class_id, weight in class_weights.items():
-        print(
-            f"{class_id:2d} - "
-            f"{FINAL_CLASS_NAMES[class_id]}: "
-            f"{weight:.3f}"
-        )
-
     model = create_augmented_model()
 
-    print("\nAugmented CNN")
+    print("\nAugmented CNN - Experiment 3")
     model.summary()
 
     history = model.fit(
@@ -278,7 +251,6 @@ def train_augmented_model(x_train, y_train, x_test, y_test):
         epochs=10,
         batch_size=64,
         shuffle=True,
-        class_weight=class_weights,
     )
 
     test_loss, test_accuracy = model.evaluate(
@@ -287,14 +259,14 @@ def train_augmented_model(x_train, y_train, x_test, y_test):
         verbose=0,
     )
 
-    print("\nExperiment 2 results")
+    print("\nExperiment 3 results")
     print("Test loss:", test_loss)
     print("Test accuracy:", test_accuracy)
 
     return model, history
 
 
-def plot_experiment_two_history(history):
+def plot_experiment_three_history(history):
     plt.figure(figsize=(8, 5))
 
     plt.plot(
@@ -307,13 +279,13 @@ def plot_experiment_two_history(history):
         label="Validation Accuracy",
     )
 
-    plt.title("Experiment 2 Accuracy")
+    plt.title("Experiment 3 Accuracy")
     plt.xlabel("Epoch")
     plt.ylabel("Accuracy")
     plt.legend()
 
     plt.tight_layout()
-    plt.savefig("experiment2_accuracy.png")
+    plt.savefig("experiment3_accuracy.png")
     plt.show()
 
     plt.figure(figsize=(8, 5))
@@ -328,13 +300,13 @@ def plot_experiment_two_history(history):
         label="Validation Loss",
     )
 
-    plt.title("Experiment 2 Loss")
+    plt.title("Experiment 3 Loss")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
     plt.legend()
 
     plt.tight_layout()
-    plt.savefig("experiment2_loss.png")
+    plt.savefig("experiment3_loss.png")
     plt.show()
 
 
@@ -393,7 +365,7 @@ def main():
         axis=0,
     )
 
-    # Shuffle the combined training dataset
+    # Shuffle training data before validation split
     rng = np.random.default_rng(42)
     indices = rng.permutation(len(x_train))
 
@@ -421,7 +393,7 @@ def main():
         y_test,
     )
 
-    plot_experiment_two_history(history)
+    plot_experiment_three_history(history)
 
 
 if __name__ == "__main__":
