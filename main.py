@@ -7,6 +7,8 @@ from tensorflow.keras.callbacks import (
     ReduceLROnPlateau,
 )
 
+from sklearn.metrics import confusion_matrix
+
 from cnn_model import (
     create_baseline_model,
     create_augmented_model,
@@ -242,7 +244,7 @@ def show_preprocessing_examples(image):
 
 def train_augmented_model(x_train, y_train, x_test, y_test):
     x_train = x_train.astype("float32") / 255.0
-    x_test = x_test.astype("float32") / 255.0
+    x_test_normalized = x_test.astype("float32") / 255.0
 
     model = create_augmented_model()
 
@@ -277,7 +279,7 @@ def train_augmented_model(x_train, y_train, x_test, y_test):
     )
 
     test_loss, test_accuracy = model.evaluate(
-        x_test,
+        x_test_normalized,
         y_test,
         verbose=0,
     )
@@ -286,6 +288,9 @@ def train_augmented_model(x_train, y_train, x_test, y_test):
     print("Epochs completed:", len(history.history["loss"]))
     print("Test loss:", test_loss)
     print("Test accuracy:", test_accuracy)
+
+    model.save("best_model.keras")
+    print("Model saved as best_model.keras")
 
     return model, history
 
@@ -331,6 +336,145 @@ def plot_experiment_four_history(history):
 
     plt.tight_layout()
     plt.savefig("experiment4_loss.png")
+    plt.show()
+
+
+def test_random_images(model, x_test, y_test, number_of_images=12):
+    rng = np.random.default_rng(42)
+
+    random_indices = rng.choice(
+        len(x_test),
+        size=number_of_images,
+        replace=False,
+    )
+
+    selected_images = x_test[random_indices]
+    selected_labels = y_test[random_indices]
+
+    normalized_images = (
+        selected_images.astype("float32") / 255.0
+    )
+
+    predictions = model.predict(
+        normalized_images,
+        verbose=0,
+    )
+
+    predicted_labels = np.argmax(
+        predictions,
+        axis=1,
+    )
+
+    correct_predictions = np.sum(
+        predicted_labels == selected_labels
+    )
+
+    print(
+        f"\nRandom image test: "
+        f"{correct_predictions}/{number_of_images} correct"
+    )
+
+    fig, axes = plt.subplots(3, 4, figsize=(12, 9))
+
+    for index, ax in enumerate(axes.flat):
+        actual_class = FINAL_CLASS_NAMES[
+            selected_labels[index]
+        ]
+
+        predicted_class = FINAL_CLASS_NAMES[
+            predicted_labels[index]
+        ]
+
+        confidence = (
+            predictions[index][predicted_labels[index]]
+            * 100
+        )
+
+        ax.imshow(selected_images[index])
+
+        ax.set_title(
+            f"Actual: {actual_class}\n"
+            f"Predicted: {predicted_class}\n"
+            f"Confidence: {confidence:.1f}%",
+            fontsize=9,
+        )
+
+        ax.axis("off")
+
+    plt.suptitle("Random Test Image Predictions")
+    plt.tight_layout()
+    plt.savefig("random_predictions.png")
+    plt.show()
+
+
+def evaluate_per_class(model, x_test, y_test):
+    x_test_normalized = (
+        x_test.astype("float32") / 255.0
+    )
+
+    predictions = model.predict(
+        x_test_normalized,
+        verbose=0,
+    )
+
+    predicted_labels = np.argmax(
+        predictions,
+        axis=1,
+    )
+
+    cm = confusion_matrix(
+        y_test,
+        predicted_labels,
+        labels=range(len(FINAL_CLASS_NAMES)),
+    )
+
+    print("\nPer-class accuracy:")
+
+    for class_id, class_name in enumerate(FINAL_CLASS_NAMES):
+        total = np.sum(cm[class_id])
+
+        if total > 0:
+            correct = cm[class_id, class_id]
+            accuracy = correct / total
+        else:
+            accuracy = 0
+
+        print(
+            f"{class_name:15s}: "
+            f"{accuracy * 100:.2f}%"
+        )
+
+    plt.figure(figsize=(14, 12))
+
+    plt.imshow(
+        cm,
+        interpolation="nearest",
+        cmap="Blues",
+    )
+
+    plt.title("Final Model Confusion Matrix")
+    plt.colorbar()
+
+    tick_marks = np.arange(
+        len(FINAL_CLASS_NAMES)
+    )
+
+    plt.xticks(
+        tick_marks,
+        FINAL_CLASS_NAMES,
+        rotation=90,
+    )
+
+    plt.yticks(
+        tick_marks,
+        FINAL_CLASS_NAMES,
+    )
+
+    plt.xlabel("Predicted Class")
+    plt.ylabel("Actual Class")
+
+    plt.tight_layout()
+    plt.savefig("confusion_matrix.png")
     plt.show()
 
 
@@ -418,6 +562,18 @@ def main():
     )
 
     plot_experiment_four_history(history)
+
+    test_random_images(
+        model,
+        x_test,
+        y_test,
+    )
+
+    evaluate_per_class(
+        model,
+        x_test,
+        y_test,
+    )
 
 
 if __name__ == "__main__":
