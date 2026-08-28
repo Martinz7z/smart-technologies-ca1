@@ -7,6 +7,8 @@ from tensorflow.keras.callbacks import (
     ReduceLROnPlateau,
 )
 
+from sklearn.metrics import confusion_matrix
+
 from cnn_model import (
     create_baseline_model,
     create_augmented_model,
@@ -405,6 +407,77 @@ def test_random_images(model, x_test, y_test, number_of_images=12):
     plt.show()
 
 
+def evaluate_per_class(model, x_test, y_test):
+    x_test_normalized = (
+        x_test.astype("float32") / 255.0
+    )
+
+    predictions = model.predict(
+        x_test_normalized,
+        verbose=0,
+    )
+
+    predicted_labels = np.argmax(
+        predictions,
+        axis=1,
+    )
+
+    cm = confusion_matrix(
+        y_test,
+        predicted_labels,
+        labels=range(len(FINAL_CLASS_NAMES)),
+    )
+
+    print("\nPer-class accuracy:")
+
+    for class_id, class_name in enumerate(FINAL_CLASS_NAMES):
+        total = np.sum(cm[class_id])
+
+        if total > 0:
+            correct = cm[class_id, class_id]
+            accuracy = correct / total
+        else:
+            accuracy = 0
+
+        print(
+            f"{class_name:15s}: "
+            f"{accuracy * 100:.2f}%"
+        )
+
+    plt.figure(figsize=(14, 12))
+
+    plt.imshow(
+        cm,
+        interpolation="nearest",
+        cmap="Blues",
+    )
+
+    plt.title("Final Model Confusion Matrix")
+    plt.colorbar()
+
+    tick_marks = np.arange(
+        len(FINAL_CLASS_NAMES)
+    )
+
+    plt.xticks(
+        tick_marks,
+        FINAL_CLASS_NAMES,
+        rotation=90,
+    )
+
+    plt.yticks(
+        tick_marks,
+        FINAL_CLASS_NAMES,
+    )
+
+    plt.xlabel("Predicted Class")
+    plt.ylabel("Actual Class")
+
+    plt.tight_layout()
+    plt.savefig("confusion_matrix.png")
+    plt.show()
+
+
 def main():
     print("Smart Technologies CA1")
     print("TensorFlow version:", tf.__version__)
@@ -491,6 +564,12 @@ def main():
     plot_experiment_four_history(history)
 
     test_random_images(
+        model,
+        x_test,
+        y_test,
+    )
+
+    evaluate_per_class(
         model,
         x_test,
         y_test,
