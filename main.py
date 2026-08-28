@@ -2,6 +2,11 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
+from tensorflow.keras.callbacks import (
+    EarlyStopping,
+    ReduceLROnPlateau,
+)
+
 from cnn_model import (
     create_baseline_model,
     create_augmented_model,
@@ -241,16 +246,34 @@ def train_augmented_model(x_train, y_train, x_test, y_test):
 
     model = create_augmented_model()
 
-    print("\nAugmented CNN - Experiment 3")
+    print("\nAugmented CNN - Experiment 4")
     model.summary()
+
+    early_stopping = EarlyStopping(
+        monitor="val_loss",
+        patience=4,
+        restore_best_weights=True,
+    )
+
+    reduce_lr = ReduceLROnPlateau(
+        monitor="val_loss",
+        factor=0.5,
+        patience=2,
+        min_lr=0.00001,
+        verbose=1,
+    )
 
     history = model.fit(
         x_train,
         y_train,
         validation_split=0.1,
-        epochs=10,
+        epochs=30,
         batch_size=64,
         shuffle=True,
+        callbacks=[
+            early_stopping,
+            reduce_lr,
+        ],
     )
 
     test_loss, test_accuracy = model.evaluate(
@@ -259,14 +282,15 @@ def train_augmented_model(x_train, y_train, x_test, y_test):
         verbose=0,
     )
 
-    print("\nExperiment 3 results")
+    print("\nExperiment 4 results")
+    print("Epochs completed:", len(history.history["loss"]))
     print("Test loss:", test_loss)
     print("Test accuracy:", test_accuracy)
 
     return model, history
 
 
-def plot_experiment_three_history(history):
+def plot_experiment_four_history(history):
     plt.figure(figsize=(8, 5))
 
     plt.plot(
@@ -279,13 +303,13 @@ def plot_experiment_three_history(history):
         label="Validation Accuracy",
     )
 
-    plt.title("Experiment 3 Accuracy")
+    plt.title("Experiment 4 Accuracy")
     plt.xlabel("Epoch")
     plt.ylabel("Accuracy")
     plt.legend()
 
     plt.tight_layout()
-    plt.savefig("experiment3_accuracy.png")
+    plt.savefig("experiment4_accuracy.png")
     plt.show()
 
     plt.figure(figsize=(8, 5))
@@ -300,13 +324,13 @@ def plot_experiment_three_history(history):
         label="Validation Loss",
     )
 
-    plt.title("Experiment 3 Loss")
+    plt.title("Experiment 4 Loss")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
     plt.legend()
 
     plt.tight_layout()
-    plt.savefig("experiment3_loss.png")
+    plt.savefig("experiment4_loss.png")
     plt.show()
 
 
@@ -393,7 +417,7 @@ def main():
         y_test,
     )
 
-    plot_experiment_three_history(history)
+    plot_experiment_four_history(history)
 
 
 if __name__ == "__main__":
